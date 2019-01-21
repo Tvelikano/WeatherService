@@ -1,31 +1,23 @@
-﻿using Newtonsoft.Json;
+﻿using System.Web.Http;
 
-using System;
-using System.IO;
-using System.Web.Http;
-
-using Weather.Api.Models;
+using Weather.Data.Repository;
 
 namespace Weather.Api.Controllers
 {
     public class WeatherController : ApiController
     {
+        private readonly IRepository _repository;
+
+        public WeatherController()
+        {
+            _repository = new WeatherRepository();
+        }
+
         public IHttpActionResult Get()
         {
-            try
-            {
-                using (var reader = new StreamReader("weather.json"))
-                {
-                    var json = reader.ReadToEnd();
-                    var weatherInfo = JsonConvert.DeserializeObject<ClientWeather>(json);
+            var weather = _repository.Get();
 
-                    return Ok(weatherInfo);
-                }
-            }
-            catch (Exception e)
-            {
-                return InternalServerError(e);
-            }
+            return Ok(weather);
         }
     }
 }

@@ -3,14 +3,13 @@
 using Newtonsoft.Json;
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Timers;
-
-using Weather.Api.Models;
+using Weather.Data.Models;
+using Weather.Data.Repository;
 using Weather.Service.Models;
 
 namespace Weather.Service
@@ -30,9 +29,13 @@ namespace Weather.Service
         private readonly Timer _timer;
         private const int Interval = 5400000; // 1,5 Hours 
 
+        private readonly IRepository _repository;
+
         public WeatherService()
         {
             InitializeComponent();
+            _repository = new WeatherRepository();
+
             Task.Run(GetWeather).Wait();
 
             _timer = new Timer(Interval);
@@ -53,7 +56,7 @@ namespace Weather.Service
             base.OnStop();
         }
 
-        private static async Task GetWeather()
+        private async Task GetWeather()
         {
             var requestUrl = $"{ApiUrl}?id={CityId}&APPID={AppId}&units={Units}&lang={Language}&mode={Mode}";
 
@@ -70,10 +73,7 @@ namespace Weather.Service
                     Description = weather.Weather.FirstOrDefault()?.Description
                 };
 
-                using (var writer = new StreamWriter("weather.json", false))
-                {
-                    writer.Write(JsonConvert.SerializeObject(clientWeather));
-                }
+                await _repository.Add(clientWeather);
             }
         }
     }
